@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container my-4">
+        <h1 class="text-center">Kursna lista najpopularnijih kriptovaluta</h1>
+        <div class="table-responsive mt-3">
+            <table class="table table-striped" id="courseList">
+                <thead>
+                <th>Naziv valute</th>
+                <th>Skracenica</th>
+                <th>Vrednost u dolarima</th>
+                <th>Vrednost u eurima</th>
+                <th>Vrednost u dinarima</th>
+                </thead>
+                <tbody id="tdata">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="container mt-4">
+        <h1 class="text-center">Brze akcije</h1>
+        <div class="d-flex mt-5 w-100 justify-content-around">
+            <div class="w-33">
+                <a href="/transfer">Novi transfer</a>
+            </div>
+            <div class="w-33">
+                <a href="/transfers">Pregled transakcija</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        socket = io()
+        socket.connect("http://127.0.0.1:5000/")
+
+        socket.on('connect', function (msg) {
+            socket.emit('getData', {data: 'start'})
+        })
+
+
+        socket.on("response_data", function (data) {
+            console.log(data)
+            $("#tdata").empty()
+            currencies = data.data
+            currencies.forEach((currency) => {
+                let element = `
+                <tr>
+                    <td>${currency.name}</td>
+                    <td>${currency.sname}</td>
+                    <td>${currency.ammount[0]}</td>
+                    <td>${currency.ammount[1]}</td>
+                    <td>${currency.ammount[2]}</td>
+                </tr>
+            `
+                $("#tdata").append(element)
+            })
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container mt-3">
+    <div id = "responseHolder"></div>
+        <h1>Kreiranje nove transakcije</h1>
+        <form action="/createTransfer" method="POST">
+            <div class="form-group">
+                <label for="email">Adresa primaoca</label>
+                <input class="form-control" type="email" name="email">
+            </div>
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="form-group">
+                        <label for="email">Suma prenosa</label>
+                        <input id="quantity" class="form-control" type="number" name="quantity" min="0.01"
+                               max="{{ balance }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="currency">Valuta</label>
+                    <select id="currsel" class="form-control" name="currency" id="currency">
+                        <option selected disabled>Odaberi</option>
+                        {% for currency in currencies %}
+                            <option value="{{ currency[2] }}">{{ currency[1] }} - {{ currency[2] }}</option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+            </div>
+            <div id="account-balance mt-3">
+                <p id="abal">Stanje na racunu: $<span id="oldbal">{{ balance }}</span></p>
+                <p id="newbal">Stanje posle transakcije: $<span id="newBal"></span></p>
+            </div>
+            <button type="button" id="sendTransfer" class="mt-3 btn btn-primary">Kreiraj transfer</button>
+        </form>
+    </div>
+    <script>
+        $(document).ready(function () {
+            {#convertToDollars()#}
+            $("#currsel").change()
+            setNewBalance()
+        })
+        let rate = 0
+        $("#sendTransfer").click(function () {
+            $.ajax({
+                url: '/createTransfer',
+                type: 'POST',
+                data: $('form').serialize(),
+                success: function (response) {
+                    console.log(response)
+                     let element = `
+                    <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                      ${response.message}
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    `
+                    $("#responseHolder").append(element)
+                    setTimeout(() => {
+                        location.reload()
+                    }, 3000)
+                }
+            })
+        })
+        $("#currsel").change(function () {
+            let selectedcurr = $("#currsel").val()
+            $.ajax({
+                url: 'http://127.0.0.1:5000/getCurrRate?curr=' + selectedcurr,
+                type: 'GET',
+                success: function (response) {
+                    console.log(response)
+                    if('ammount' in response) {
+                        setExchangeRate(response.ammount[0])
+                        convertToDollars()
+                        setNewBalance()
+                    }
+                }
+            })
+        })
+        $("#quantity").keyup(function () {
+            convertToDollars()
+            setNewBalance()
+
+        })
+
+        function setExchangeRate(ammount) {
+            rate = ammount
+        }
+
+        function convertToDollars() {
+            let input = parseFloat($("#quantity").val())
+            let converted_payment = input * rate
+            console.log(converted_payment)
+            return converted_payment
+        }
+
+        function setNewBalance() {
+            let oldbal = parseFloat($("#oldbal").text())
+            let newBal = parseFloat(oldbal - convertToDollars())
+            if (Number.isNaN(newBal)) {
+                $("#newBal").text(oldbal)
+
+            } else {
+                $("#newBal").text(newBal)
+            }
+            if (newBal < 0) {
+                $("#sendTransfer").prop('disabled', true)
+            }
+            else{
+                $("#sendTransfer").prop('disabled', false)
+            }
+        }
+    </script>
+{% endblock %}

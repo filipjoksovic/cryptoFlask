@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-3">
+        <h1>Prikaz kriptonovcanika</h1>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <th>Valuta</th>
+                <th>Kolicina</th>
+                <th>Unovci</th>
+                </thead>
+                <tbody>
+                {% for wallet in wallets %}
+                    <tr>
+                        <td>{{ wallet['currency'] }}</td>
+                        <td>{{ wallet['balance'] }}</td>
+
+                        <th>
+                            <button onclick="getMonetizationData({{ wallet['cid'] }})" type="button"
+                                    class="btn btn-primary" data-toggle="modal"
+                                    data-target="#exampleModal">
+                                Unovci
+                            </button>
+                        </th>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Unovci <span id="modalCurrName">kriptovalutu</span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div id="modalMessage"></div>
+                        <div class="form-group">
+                            <label for="currency" id="modalCurr">Cena valute</label>
+                            <input class="form-control" disabled id="modalCurrPrice">
+                        </div>
+                        <div class="form-group">
+                            <label for="currency" id="modalCurr">Kolicina za unovcavanje</label>
+                            <input class="form-control" type="number" id="modalCurrQuantity">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <span>Dostupno: <span id="modalAvFunds"></span></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <span>Novo stanje posle unovcenja: <span id="modalNewFunds"></span></span>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkazi</button>
+                    <button type="button" class="btn btn-primary" onclick="monetizeCurrency()">Unovci</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let availableFunds = 0;
+        let chosenCurrency = "";
+        let currency_id = 0;
+
+        function getMonetizationData(curr_id) {
+            currency_id = curr_id
+            $.ajax({
+                url: '/getMonetizationDetails?currency=' + curr_id,
+                dataType: 'json',
+                success: function (response) {
+                    console.log(response)
+                    let data = response.data
+                    $("#modalCurrName").text(data.currency)
+                    $("#modalCurrPrice").val(data.currency_value)
+                    $("#modalAvFunds").text(data.user_balance + " " + data.currency_sname)
+                    setAvailableFunds(data.user_balance, data.currency_sname)
+                },
+                error: function (response) {
+                    console.log(response)
+                }
+            })
+        }
+
+        function setAvailableFunds(value, sname) {
+            availableFunds = value
+            chosenCurrency = sname
+        }
+
+        $("#modalCurrQuantity").keyup(function () {
+            let value = parseInt($("#modalCurrQuantity").val())
+            if (Number.isNaN(value)) {
+                value = 0
+            }
+            if (value > availableFunds) {
+                $("#modalCurrQuantity").val(availableFunds)
+                $("#modalNewFunds").text(0 + " " + chosenCurrency)
+
+            } else {
+                $("#modalNewFunds").text(availableFunds - value + " " + chosenCurrency)
+            }
+        })
+
+        function monetizeCurrency() {
+            $.ajax({
+                url: '/monetizeCurrency',
+                type: "POST",
+                data: {
+                    'curr_id': currency_id,
+                    "amount": $("#modalCurrQuantity").val()
+                },
+                success: function (response) {
+                    let element = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                      ${response.message}
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    `
+                    $("#modalMessage").append(element)
+                    setTimeout(() => {
+                        location.reload()
+                    }, 3000)
+                },
+                error: function (response) {
+                    let element = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                      ${response.message}
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    `
+                    $("#modalMessage").append(element)
+                    setTimeout(() => {
+                        location.reload()
+                    }, 3000)
+                }
+            })
+        }
+    </script>
+{% endblock %}

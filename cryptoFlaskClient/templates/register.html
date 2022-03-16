@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container my-3">
+        <h1>Registrujte se</h1>
+        <form action="/doRegister" method="POST">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="fname">Ime</label>
+                        <input class="form-control" name="fname" id="fname">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="lname">Prezime</label>
+                        <input class="form-control" name="lname" id="lname">
+                    </div>
+                </div>
+            </div>
+            <div class='row'>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email">Email adresa</label>
+                        <input class="form-control" type="email" name="email" id="email">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="password">Lozinka</label>
+                        <input class="form-control" type="password" name="password" id="password">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="phone">Broj telefona</label>
+                        <input class="form-control" type="phone" name="phone" id="phone">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="address">Adresa</label>
+                        <input class="form-control" name="address" id="address" type="text">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="city">Grad</label>
+                        <input class="form-control" name="city" id="city" type="text">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="country">Drzava</label>
+                        <input class="form-control" name="country" id="country" type="text">
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+    </div>
+{% endblock %}

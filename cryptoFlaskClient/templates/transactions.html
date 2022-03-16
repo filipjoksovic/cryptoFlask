@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container my-3">
+        <h1>Transakcije</h1>
+        <form method="POST" action="/payment">
+            <h1>Nova transakcija</h1>
+            <div class="input-group mb-3">
+                <input type="number" class="form-control" name="currency_quantity" id="currency_quantity"
+                       aria-label="Amount (to the nearest dollar)">
+                <select class="form-control" id="currency_id">
+                    {% for currency in currencies %}
+                        <option value= {{ currency[0] }}>{{ currency[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label for="email">Email primaoca</label>
+                <input type="email" class="form-control" name="email" id="receiverEmail"
+                       aria-label="Amount (to the nearest dollar)">
+            </div>
+            <button type="button" id="transactionButton" class="btn d-block w-50 mx-auto btn-success">Posalji</button>
+        </form>
+    </div>
+    <div class="container my-3">
+        <h1>Primljeni transferi</h1>
+        <div class="table-responsive">
+            <table id = "received" class="table table-striped table-primary">
+                <th>Hash ID</th>
+                <th>Valuta</th>
+                <th>Kolicina</th>
+                <th>Datum kreiranja</th>
+                <th>Status</th>
+                <tbody id='received'>
+                {% for transfer in received %}
+                    <tr>
+                        <td>{{ transfer['hash_id'] }} </td>
+                        <td>{{ transfer['currency'] }}</td>
+                        <td>{{ transfer['quantity'] }}</td>
+                        <td>{{ transfer['created_at'] }}</td>
+                        <td>{{ transfer['status'] }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="container my-3">
+        <h1>Poslati transferi</h1>
+        <div class="table-responsive">
+            <table id = "sent" class="table table-striped table-primary">
+                <th>Hash ID</th>
+                <th>Valuta</th>
+                <th>Kolicina</th>
+                <th>Datum kreiranja</th>
+                <th>Status</th>
+
+                <tbody id='received'>
+                {% for transfer in sent %}
+                    <tr>
+                        <td>{{ transfer['hash_id'] }} </td>
+                        <td>{{ transfer['currency'] }}</td>
+                        <td>{{ transfer['quantity'] }}</td>
+                        <td>{{ transfer['created_at'] }}</td>
+                        <td>{{ transfer['Status'] }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Potvrdi transakciju</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <p id="responseHolder"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="confirmBtn">Potvrdi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let transData = null;
+        let initiate = true;
+
+        function setTransData(val) {
+            transData = val
+        }
+
+        $("#transactionButton").click(function () {
+            event.preventDefault();
+            let data = {
+                'receiver': $("#receiverEmail").val(),
+                'currency_id': $("#currency_id").val(),
+                'currency_quantity': $("#currency_quantity").val()
+            }
+            $.ajax({
+                url: '/prepareTransaction',
+                method: 'POST',
+                data: data,
+                success: function (response) {
+                    console.log(response)
+                    setTransData(response.transaction_data)
+                    $("#responseHolder").text(response.message)
+                    $("#confirmModal").modal('show')
+                    if (response.status == 500) {
+                        initiate = false
+                    } else [
+                        initiate = true
+                    ]
+                },
+                error: function (response) {
+                    console.log(response)
+                }
+            })
+        })
+        $("#confirmBtn").click(function () {
+            if (!initiate) {
+                return
+            }
+            $.ajax({
+                url: '/initiateTransaction',
+                type: 'POST',
+                data: transData,
+                success: function (response) {
+                    console.log(response)
+                    $("#confirmModal").modal('hide')
+                },
+                error: function (response) {
+
+                }
+            })
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoTrade</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"
+            integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+          integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"
+            integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.0/socket.io.js"
+            integrity="sha512-nYuHvSAhY5lFZ4ixSViOwsEKFvlxHMU2NHts1ILuJgOS6ptUmAGt/0i5czIgMOahKZ6JN84YFDA+mCdky7dD8A=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">CryptoTrade</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+            </li>
+            {% if session['uid'] %}
+                <li class="nav-item"><a class="nav-link" href="/account">Upravljanje nalogom</a></li>
+                <li class="nav-item"><a class="nav-link" href="/wallets">Kripto nalozi</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logout">{{ session['email'] }} - Logout</a></li>
+            {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/register">Register</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+<div id="transferAlert">
+
+</div>
+{% if session['message'] %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session.pop('message') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+{% endif %}
+{% if session['errors'] %}
+    {% for error in session['errors'] %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Greska!</strong> {{ error }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+    <div class="d-none">
+        {{ session.pop('errors',None) }}
+    </div>
+{% endif %}
+
+{% block content %}
+
+{% endblock %}
+
+<script>
+    let socket = io()
+    socket.connect("http://127.0.0.1:5001")
+    {% if 'uid' in session %}
+        console.log("emitting")
+        socket.emit('establish_connection', {{ session['uid'] }})
+    {% endif %}
+
+    socket.on('sendTransaction', function (data) {
+        console.log("You are receiver/sender")
+        let element = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <span>Nova transakcija. <a href = "/transfers">Pogledaj.</a></span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`
+        $("#transferAlert").append(element)
+        console.log(data)
+    })
+    socket.on('processedTransaction', function (data) {
+        console.log("You are receiver/sender")
+        let element = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <span>Transakcija procesovana. <a href = "/transfers">Pogledaj.</a></span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`
+        $("#transferAlert").append(element)
+        console.log(data)
+    })
+
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container mt-3">
+        <h1>Pregled primljenih transakcija</h1>
+        <div class="table table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <th>Status</th>
+                <th>Hash ID</th>
+                <th>Valuta</th>
+                <th>Kolicina</th>
+                <th>Datum kreiranja</th>
+                </thead>
+                <tbody id="receivedTransactions">
+                {% for row in received %}
+                    <tr id="received-{{ row['hash_id'] }}">
+                        <td>{{ row['status'] }}</td>
+                        <td>{{ row['hash_id'] }}</td>
+                        <td>{{ row['currency'] }}</td>
+                        <td>{{ row['value'] }}</td>
+                        <td>{{ row['created_at'] }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="container mt-3">
+        <h1>Pregled poslatih transakcija</h1>
+        <div class="table table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <th>Status</th>
+                <th>Hash ID</th>
+                <th>Valuta</th>
+                <th>Kolicina</th>
+                <th>Datum kreiranja</th>
+                </thead>
+                <tbody>
+                {% for row in sent %}
+                    <tr id="sent-{{ row['hash_id'] }}">
+                        <td>{{ row['status'] }}</td>
+                        <td>{{ row['hash_id'] }}</td>
+                        <td>{{ row['currency'] }}</td>
+                        <td>{{ row['value'] }}</td>
+                        <td>{{ row['created_at'] }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        socket = io();
+        socket.emit("recieveTransactions", function (data) {
+            console.log(data)
+        })
+        socket.on('sendTransaction', (data) => {
+                console.log('here')
+                console.log(data)
+                let transaction_data = data.message
+                let element = `
+                <tr id = "received-${transaction_data.hash_id}">
+                    <td>${transaction_data.status}</td>
+                    <td>${transaction_data.hash_id}</td>
+                    <td>${transaction_data.currency}</td>
+                    <td>${transaction_data.value}</td>
+                    <td>${transaction_data.created_at}</td>
+                </tr>
+            `
+
+                $("#receivedTransactions").prepend(element)
+        })
+        socket.on('processedTransaction', function (data) {
+                console.log('transaction received')
+                console.log(data)
+                let transaction_data = data.message
+                let element = `
+                <tr id = "received-${transaction_data.hash_id}">
+                    <td>${transaction_data.status}</td>
+                    <td>${transaction_data.hash_id}</td>
+                    <td>${transaction_data.currency}</td>
+                    <td>${transaction_data.value}</td>
+                    <td>${transaction_data.created_at}</td>
+                </tr>
+            `
+                $("#received-" + transaction_data.hash_id).remove()
+                $("#receivedTransactions").prepend(element)
+        })
+    </script>
+{% endblock %}
